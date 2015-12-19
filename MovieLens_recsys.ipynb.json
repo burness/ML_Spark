@@ -1,0 +1,696 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 100,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "196\t242\t3\t881250949\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "[[u'196', u'242', u'3', u'881250949'],\n",
+       " [u'186', u'302', u'3', u'891717742'],\n",
+       " [u'22', u'377', u'1', u'878887116'],\n",
+       " [u'244', u'51', u'2', u'880606923'],\n",
+       " [u'166', u'346', u'1', u'886397596']]"
+      ]
+     },
+     "execution_count": 100,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rawData = sc.textFile(\"../data/ML_spark/MovieLens/u.data\")\n",
+    "print rawData.first()\n",
+    "rawRatings = rawData.map(lambda x: x.split('\\t'))\n",
+    "rawRatings.take(5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 101,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Rating(user=196, product=242, rating=3.0)\n"
+     ]
+    }
+   ],
+   "source": [
+    "from pyspark.mllib.recommendation import Rating\n",
+    "from pyspark.mllib.recommendation import ALS\n",
+    "ratings = rawRatings.map(lambda x : Rating(int(x[0]),int(x[1]),float(x[2])))\n",
+    "print ratings.first()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 107,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[(1, array('d', [-0.13104072213172913, -0.282988965511322, 0.24604278802871704, -0.06333297491073608, -0.0932791605591774, 0.5691770911216736, -0.1593635380268097, -0.31947049498558044, 0.40703240036964417, 0.100776307284832, -0.07234027981758118, -0.13184002041816711, 0.09165998548269272, 0.03929411247372627, -0.5452826619148254, -0.6004565954208374, -0.4491104185581207, -0.3165319859981537, 0.13982048630714417, 0.6148051619529724, -0.19402047991752625, -0.2463371455669403, -0.42587268352508545, -0.4392813742160797, -0.27058282494544983, 0.4654891788959503, 0.09670299291610718, 0.690264880657196, -0.3652711510658264, 0.1276160180568695, -0.2946450412273407, -0.1003253310918808, 0.44784021377563477, 0.08422166109085083, 0.004761628340929747, 0.3710950016975403, 0.03529037535190582, -0.003700000699609518, 0.20448213815689087, -0.5644260048866272, 0.3054317533969879, -0.12391532212495804, -0.021917996928095818, -0.2748047411441803, 0.18297477066516876, -0.11456761509180069, 0.08473280072212219, -0.1540612280368805, 0.31903472542762756, 0.0054412283934652805])), (2, array('d', [-0.08945189416408539, -0.03413568064570427, 0.43625903129577637, 0.0785268247127533, -0.4012453854084015, 0.4922947585582733, 0.0027374164201319218, 0.13968007266521454, 0.5708315372467041, 0.6401664614677429, 0.5011270642280579, -0.19007831811904907, -1.0078891515731812, -0.28364336490631104, -0.18568699061870575, -0.334163099527359, -0.3900347650051117, 0.5458892583847046, -0.04744188115000725, -0.38395756483078003, -0.06307632476091385, -0.22384130954742432, -0.16391372680664062, -0.6401799917221069, 0.7147288918495178, -0.06084635481238365, 0.2154608517885208, 0.06769492477178574, 0.38444170355796814, -0.17360781133174896, 0.17089541256427765, -0.10182852298021317, 0.20359405875205994, -0.027025269344449043, 0.018665602430701256, -0.3616451621055603, 0.31007057428359985, -0.2844338119029999, 0.4237689673900604, 0.17587541043758392, 0.5919102430343628, -0.36578550934791565, 0.3443927466869354, -0.14220429956912994, 0.5722925066947937, 0.07627754658460617, -0.18660560250282288, -0.14777803421020508, 0.1280229687690735, 0.34405994415283203]))]\n"
+     ]
+    }
+   ],
+   "source": [
+    "model = ALS.train(ratings,50)\n",
+    "# modelImplicit = ALS.(ratings,50,alpha=0.02)\n",
+    "userFeatures = model.userFeatures()\n",
+    "print userFeatures.take(2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "3.76599662082\n"
+     ]
+    }
+   ],
+   "source": [
+    "predictRating = model.predict(789,123)\n",
+    "# predictRatingImplicit = modelImplicit.predict(789,123)\n",
+    "print predictRating\n",
+    "# print predictRatingImplicit"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "userId = 789\n",
+    "K = 10\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 108,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Rating(user=789, product=675, rating=6.367017598182441)\n",
+      "Rating(user=789, product=179, rating=5.6896459072899335)\n",
+      "Rating(user=789, product=514, rating=5.457768288024388)\n",
+      "Rating(user=789, product=101, rating=5.433179519202287)\n",
+      "Rating(user=789, product=653, rating=5.394240790943933)\n",
+      "Rating(user=789, product=573, rating=5.361399367897831)\n",
+      "Rating(user=789, product=182, rating=5.266709390311053)\n",
+      "Rating(user=789, product=183, rating=5.2116836182726045)\n",
+      "Rating(user=789, product=135, rating=5.203360119834471)\n",
+      "Rating(user=789, product=611, rating=5.1741158219632695)\n",
+      "1012\n",
+      "127\n",
+      "475\n",
+      "93\n",
+      "1161\n",
+      "286\n",
+      "293\n",
+      "9\n",
+      "50\n",
+      "294\n"
+     ]
+    }
+   ],
+   "source": [
+    "topKRecs = model.recommendProducts(userId,K)\n",
+    "for rec in topKRecs:\n",
+    "    print rec\n",
+    "moviesForUser = ratings.groupBy(lambda x : x.user).mapValues(list).lookup(userId)\n",
+    "# print moviesForUser\n",
+    "for i in moviesForUser[0][:10]:\n",
+    "    print i.product\n",
+    "# for \n",
+    "# print moviesForUser"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "{1: u'Toy Story (1995)', 2: u'GoldenEye (1995)', 3: u'Four Rooms (1995)', 4: u'Get Shorty (1995)', 5: u'Copycat (1995)', 6: u'Shanghai Triad (Yao a yao yao dao waipo qiao) (1995)', 7: u'Twelve Monkeys (1995)', 8: u'Babe (1995)', 9: u'Dead Man Walking (1995)', 10: u'Richard III (1995)', 11: u'Seven (Se7en) (1995)', 12: u'Usual Suspects, The (1995)', 13: u'Mighty Aphrodite (1995)', 14: u'Postino, Il (1994)', 15: u\"Mr. Holland's Opus (1995)\", 16: u'French Twist (Gazon maudit) (1995)', 17: u'From Dusk Till Dawn (1996)', 18: u'White Balloon, The (1995)', 19: u\"Antonia's Line (1995)\", 20: u'Angels and Insects (1995)', 21: u'Muppet Treasure Island (1996)', 22: u'Braveheart (1995)', 23: u'Taxi Driver (1976)', 24: u'Rumble in the Bronx (1995)', 25: u'Birdcage, The (1996)', 26: u'Brothers McMullen, The (1995)', 27: u'Bad Boys (1995)', 28: u'Apollo 13 (1995)', 29: u'Batman Forever (1995)', 30: u'Belle de jour (1967)', 31: u'Crimson Tide (1995)', 32: u'Crumb (1994)', 33: u'Desperado (1995)', 34: u'Doom Generation, The (1995)', 35: u'Free Willy 2: The Adventure Home (1995)', 36: u'Mad Love (1995)', 37: u'Nadja (1994)', 38: u'Net, The (1995)', 39: u'Strange Days (1995)', 40: u'To Wong Foo, Thanks for Everything! Julie Newmar (1995)', 41: u'Billy Madison (1995)', 42: u'Clerks (1994)', 43: u'Disclosure (1994)', 44: u'Dolores Claiborne (1994)', 45: u'Eat Drink Man Woman (1994)', 46: u'Exotica (1994)', 47: u'Ed Wood (1994)', 48: u'Hoop Dreams (1994)', 49: u'I.Q. (1994)', 50: u'Star Wars (1977)', 51: u'Legends of the Fall (1994)', 52: u'Madness of King George, The (1994)', 53: u'Natural Born Killers (1994)', 54: u'Outbreak (1995)', 55: u'Professional, The (1994)', 56: u'Pulp Fiction (1994)', 57: u'Priest (1994)', 58: u'Quiz Show (1994)', 59: u'Three Colors: Red (1994)', 60: u'Three Colors: Blue (1993)', 61: u'Three Colors: White (1994)', 62: u'Stargate (1994)', 63: u'Santa Clause, The (1994)', 64: u'Shawshank Redemption, The (1994)', 65: u\"What's Eating Gilbert Grape (1993)\", 66: u'While You Were Sleeping (1995)', 67: u'Ace Ventura: Pet Detective (1994)', 68: u'Crow, The (1994)', 69: u'Forrest Gump (1994)', 70: u'Four Weddings and a Funeral (1994)', 71: u'Lion King, The (1994)', 72: u'Mask, The (1994)', 73: u'Maverick (1994)', 74: u'Faster Pussycat! Kill! Kill! (1965)', 75: u'Brother Minister: The Assassination of Malcolm X (1994)', 76: u\"Carlito's Way (1993)\", 77: u'Firm, The (1993)', 78: u'Free Willy (1993)', 79: u'Fugitive, The (1993)', 80: u'Hot Shots! Part Deux (1993)', 81: u'Hudsucker Proxy, The (1994)', 82: u'Jurassic Park (1993)', 83: u'Much Ado About Nothing (1993)', 84: u\"Robert A. Heinlein's The Puppet Masters (1994)\", 85: u'Ref, The (1994)', 86: u'Remains of the Day, The (1993)', 87: u'Searching for Bobby Fischer (1993)', 88: u'Sleepless in Seattle (1993)', 89: u'Blade Runner (1982)', 90: u'So I Married an Axe Murderer (1993)', 91: u'Nightmare Before Christmas, The (1993)', 92: u'True Romance (1993)', 93: u'Welcome to the Dollhouse (1995)', 94: u'Home Alone (1990)', 95: u'Aladdin (1992)', 96: u'Terminator 2: Judgment Day (1991)', 97: u'Dances with Wolves (1990)', 98: u'Silence of the Lambs, The (1991)', 99: u'Snow White and the Seven Dwarfs (1937)', 100: u'Fargo (1996)', 101: u'Heavy Metal (1981)', 102: u'Aristocats, The (1970)', 103: u'All Dogs Go to Heaven 2 (1996)', 104: u'Theodore Rex (1995)', 105: u'Sgt. Bilko (1996)', 106: u'Diabolique (1996)', 107: u'Moll Flanders (1996)', 108: u'Kids in the Hall: Brain Candy (1996)', 109: u'Mystery Science Theater 3000: The Movie (1996)', 110: u'Operation Dumbo Drop (1995)', 111: u'Truth About Cats & Dogs, The (1996)', 112: u'Flipper (1996)', 113: u'Horseman on the Roof, The (Hussard sur le toit, Le) (1995)', 114: u'Wallace & Gromit: The Best of Aardman Animation (1996)', 115: u'Haunted World of Edward D. Wood Jr., The (1995)', 116: u'Cold Comfort Farm (1995)', 117: u'Rock, The (1996)', 118: u'Twister (1996)', 119: u'Maya Lin: A Strong Clear Vision (1994)', 120: u'Striptease (1996)', 121: u'Independence Day (ID4) (1996)', 122: u'Cable Guy, The (1996)', 123: u'Frighteners, The (1996)', 124: u'Lone Star (1996)', 125: u'Phenomenon (1996)', 126: u'Spitfire Grill, The (1996)', 127: u'Godfather, The (1972)', 128: u'Supercop (1992)', 129: u'Bound (1996)', 130: u'Kansas City (1996)', 131: u\"Breakfast at Tiffany's (1961)\", 132: u'Wizard of Oz, The (1939)', 133: u'Gone with the Wind (1939)', 134: u'Citizen Kane (1941)', 135: u'2001: A Space Odyssey (1968)', 136: u'Mr. Smith Goes to Washington (1939)', 137: u'Big Night (1996)', 138: u'D3: The Mighty Ducks (1996)', 139: u'Love Bug, The (1969)', 140: u'Homeward Bound: The Incredible Journey (1993)', 141: u'20,000 Leagues Under the Sea (1954)', 142: u'Bedknobs and Broomsticks (1971)', 143: u'Sound of Music, The (1965)', 144: u'Die Hard (1988)', 145: u'Lawnmower Man, The (1992)', 146: u'Unhook the Stars (1996)', 147: u'Long Kiss Goodnight, The (1996)', 148: u'Ghost and the Darkness, The (1996)', 149: u'Jude (1996)', 150: u'Swingers (1996)', 151: u'Willy Wonka and the Chocolate Factory (1971)', 152: u'Sleeper (1973)', 153: u'Fish Called Wanda, A (1988)', 154: u\"Monty Python's Life of Brian (1979)\", 155: u'Dirty Dancing (1987)', 156: u'Reservoir Dogs (1992)', 157: u'Platoon (1986)', 158: u\"Weekend at Bernie's (1989)\", 159: u'Basic Instinct (1992)', 160: u'Glengarry Glen Ross (1992)', 161: u'Top Gun (1986)', 162: u'On Golden Pond (1981)', 163: u'Return of the Pink Panther, The (1974)', 164: u'Abyss, The (1989)', 165: u'Jean de Florette (1986)', 166: u'Manon of the Spring (Manon des sources) (1986)', 167: u'Private Benjamin (1980)', 168: u'Monty Python and the Holy Grail (1974)', 169: u'Wrong Trousers, The (1993)', 170: u'Cinema Paradiso (1988)', 171: u'Delicatessen (1991)', 172: u'Empire Strikes Back, The (1980)', 173: u'Princess Bride, The (1987)', 174: u'Raiders of the Lost Ark (1981)', 175: u'Brazil (1985)', 176: u'Aliens (1986)', 177: u'Good, The Bad and The Ugly, The (1966)', 178: u'12 Angry Men (1957)', 179: u'Clockwork Orange, A (1971)', 180: u'Apocalypse Now (1979)', 181: u'Return of the Jedi (1983)', 182: u'GoodFellas (1990)', 183: u'Alien (1979)', 184: u'Army of Darkness (1993)', 185: u'Psycho (1960)', 186: u'Blues Brothers, The (1980)', 187: u'Godfather: Part II, The (1974)', 188: u'Full Metal Jacket (1987)', 189: u'Grand Day Out, A (1992)', 190: u'Henry V (1989)', 191: u'Amadeus (1984)', 192: u'Raging Bull (1980)', 193: u'Right Stuff, The (1983)', 194: u'Sting, The (1973)', 195: u'Terminator, The (1984)', 196: u'Dead Poets Society (1989)', 197: u'Graduate, The (1967)', 198: u'Nikita (La Femme Nikita) (1990)', 199: u'Bridge on the River Kwai, The (1957)', 200: u'Shining, The (1980)', 201: u'Evil Dead II (1987)', 202: u'Groundhog Day (1993)', 203: u'Unforgiven (1992)', 204: u'Back to the Future (1985)', 205: u'Patton (1970)', 206: u'Akira (1988)', 207: u'Cyrano de Bergerac (1990)', 208: u'Young Frankenstein (1974)', 209: u'This Is Spinal Tap (1984)', 210: u'Indiana Jones and the Last Crusade (1989)', 211: u'M*A*S*H (1970)', 212: u'Unbearable Lightness of Being, The (1988)', 213: u'Room with a View, A (1986)', 214: u'Pink Floyd - The Wall (1982)', 215: u'Field of Dreams (1989)', 216: u'When Harry Met Sally... (1989)', 217: u\"Bram Stoker's Dracula (1992)\", 218: u'Cape Fear (1991)', 219: u'Nightmare on Elm Street, A (1984)', 220: u'Mirror Has Two Faces, The (1996)', 221: u'Breaking the Waves (1996)', 222: u'Star Trek: First Contact (1996)', 223: u'Sling Blade (1996)', 224: u'Ridicule (1996)', 225: u'101 Dalmatians (1996)', 226: u'Die Hard 2 (1990)', 227: u'Star Trek VI: The Undiscovered Country (1991)', 228: u'Star Trek: The Wrath of Khan (1982)', 229: u'Star Trek III: The Search for Spock (1984)', 230: u'Star Trek IV: The Voyage Home (1986)', 231: u'Batman Returns (1992)', 232: u'Young Guns (1988)', 233: u'Under Siege (1992)', 234: u'Jaws (1975)', 235: u'Mars Attacks! (1996)', 236: u'Citizen Ruth (1996)', 237: u'Jerry Maguire (1996)', 238: u'Raising Arizona (1987)', 239: u'Sneakers (1992)', 240: u'Beavis and Butt-head Do America (1996)', 241: u'Last of the Mohicans, The (1992)', 242: u'Kolya (1996)', 243: u'Jungle2Jungle (1997)', 244: u\"Smilla's Sense of Snow (1997)\", 245: u\"Devil's Own, The (1997)\", 246: u'Chasing Amy (1997)', 247: u'Turbo: A Power Rangers Movie (1997)', 248: u'Grosse Pointe Blank (1997)', 249: u'Austin Powers: International Man of Mystery (1997)', 250: u'Fifth Element, The (1997)', 251: u'Shall We Dance? (1996)', 252: u'Lost World: Jurassic Park, The (1997)', 253: u'Pillow Book, The (1995)', 254: u'Batman & Robin (1997)', 255: u\"My Best Friend's Wedding (1997)\", 256: u'When the Cats Away (Chacun cherche son chat) (1996)', 257: u'Men in Black (1997)', 258: u'Contact (1997)', 259: u'George of the Jungle (1997)', 260: u'Event Horizon (1997)', 261: u'Air Bud (1997)', 262: u'In the Company of Men (1997)', 263: u'Steel (1997)', 264: u'Mimic (1997)', 265: u'Hunt for Red October, The (1990)', 266: u'Kull the Conqueror (1997)', 267: u'unknown', 268: u'Chasing Amy (1997)', 269: u'Full Monty, The (1997)', 270: u'Gattaca (1997)', 271: u'Starship Troopers (1997)', 272: u'Good Will Hunting (1997)', 273: u'Heat (1995)', 274: u'Sabrina (1995)', 275: u'Sense and Sensibility (1995)', 276: u'Leaving Las Vegas (1995)', 277: u'Restoration (1995)', 278: u'Bed of Roses (1996)', 279: u'Once Upon a Time... When We Were Colored (1995)', 280: u'Up Close and Personal (1996)', 281: u'River Wild, The (1994)', 282: u'Time to Kill, A (1996)', 283: u'Emma (1996)', 284: u'Tin Cup (1996)', 285: u'Secrets & Lies (1996)', 286: u'English Patient, The (1996)', 287: u\"Marvin's Room (1996)\", 288: u'Scream (1996)', 289: u'Evita (1996)', 290: u'Fierce Creatures (1997)', 291: u'Absolute Power (1997)', 292: u'Rosewood (1997)', 293: u'Donnie Brasco (1997)', 294: u'Liar Liar (1997)', 295: u'Breakdown (1997)', 296: u'Promesse, La (1996)', 297: u\"Ulee's Gold (1997)\", 298: u'Face/Off (1997)', 299: u'Hoodlum (1997)', 300: u'Air Force One (1997)', 301: u'In & Out (1997)', 302: u'L.A. Confidential (1997)', 303: u\"Ulee's Gold (1997)\", 304: u'Fly Away Home (1996)', 305: u'Ice Storm, The (1997)', 306: u'Mrs. Brown (Her Majesty, Mrs. Brown) (1997)', 307: u\"Devil's Advocate, The (1997)\", 308: u'FairyTale: A True Story (1997)', 309: u'Deceiver (1997)', 310: u'Rainmaker, The (1997)', 311: u'Wings of the Dove, The (1997)', 312: u'Midnight in the Garden of Good and Evil (1997)', 313: u'Titanic (1997)', 314: u'3 Ninjas: High Noon At Mega Mountain (1998)', 315: u'Apt Pupil (1998)', 316: u'As Good As It Gets (1997)', 317: u'In the Name of the Father (1993)', 318: u\"Schindler's List (1993)\", 319: u'Everyone Says I Love You (1996)', 320: u'Paradise Lost: The Child Murders at Robin Hood Hills (1996)', 321: u'Mother (1996)', 322: u'Murder at 1600 (1997)', 323: u\"Dante's Peak (1997)\", 324: u'Lost Highway (1997)', 325: u'Crash (1996)', 326: u'G.I. Jane (1997)', 327: u'Cop Land (1997)', 328: u'Conspiracy Theory (1997)', 329: u'Desperate Measures (1998)', 330: u'187 (1997)', 331: u'Edge, The (1997)', 332: u'Kiss the Girls (1997)', 333: u'Game, The (1997)', 334: u'U Turn (1997)', 335: u'How to Be a Player (1997)', 336: u'Playing God (1997)', 337: u'House of Yes, The (1997)', 338: u'Bean (1997)', 339: u'Mad City (1997)', 340: u'Boogie Nights (1997)', 341: u'Critical Care (1997)', 342: u'Man Who Knew Too Little, The (1997)', 343: u'Alien: Resurrection (1997)', 344: u'Apostle, The (1997)', 345: u'Deconstructing Harry (1997)', 346: u'Jackie Brown (1997)', 347: u'Wag the Dog (1997)', 348: u'Desperate Measures (1998)', 349: u'Hard Rain (1998)', 350: u'Fallen (1998)', 351: u'Prophecy II, The (1998)', 352: u'Spice World (1997)', 353: u'Deep Rising (1998)', 354: u'Wedding Singer, The (1998)', 355: u'Sphere (1998)', 356: u'Client, The (1994)', 357: u\"One Flew Over the Cuckoo's Nest (1975)\", 358: u'Spawn (1997)', 359: u'Assignment, The (1997)', 360: u'Wonderland (1997)', 361: u'Incognito (1997)', 362: u'Blues Brothers 2000 (1998)', 363: u'Sudden Death (1995)', 364: u'Ace Ventura: When Nature Calls (1995)', 365: u'Powder (1995)', 366: u'Dangerous Minds (1995)', 367: u'Clueless (1995)', 368: u'Bio-Dome (1996)', 369: u'Black Sheep (1996)', 370: u'Mary Reilly (1996)', 371: u'Bridges of Madison County, The (1995)', 372: u'Jeffrey (1995)', 373: u'Judge Dredd (1995)', 374: u'Mighty Morphin Power Rangers: The Movie (1995)', 375: u'Showgirls (1995)', 376: u'Houseguest (1994)', 377: u'Heavyweights (1994)', 378: u'Miracle on 34th Street (1994)', 379: u'Tales From the Crypt Presents: Demon Knight (1995)', 380: u'Star Trek: Generations (1994)', 381: u\"Muriel's Wedding (1994)\", 382: u'Adventures of Priscilla, Queen of the Desert, The (1994)', 383: u'Flintstones, The (1994)', 384: u'Naked Gun 33 1/3: The Final Insult (1994)', 385: u'True Lies (1994)', 386: u'Addams Family Values (1993)', 387: u'Age of Innocence, The (1993)', 388: u'Beverly Hills Cop III (1994)', 389: u'Black Beauty (1994)', 390: u'Fear of a Black Hat (1993)', 391: u'Last Action Hero (1993)', 392: u'Man Without a Face, The (1993)', 393: u'Mrs. Doubtfire (1993)', 394: u'Radioland Murders (1994)', 395: u'Robin Hood: Men in Tights (1993)', 396: u'Serial Mom (1994)', 397: u'Striking Distance (1993)', 398: u'Super Mario Bros. (1993)', 399: u'Three Musketeers, The (1993)', 400: u'Little Rascals, The (1994)', 401: u'Brady Bunch Movie, The (1995)', 402: u'Ghost (1990)', 403: u'Batman (1989)', 404: u'Pinocchio (1940)', 405: u'Mission: Impossible (1996)', 406: u'Thinner (1996)', 407: u'Spy Hard (1996)', 408: u'Close Shave, A (1995)', 409: u'Jack (1996)', 410: u'Kingpin (1996)', 411: u'Nutty Professor, The (1996)', 412: u'Very Brady Sequel, A (1996)', 413: u'Tales from the Crypt Presents: Bordello of Blood (1996)', 414: u'My Favorite Year (1982)', 415: u'Apple Dumpling Gang, The (1975)', 416: u'Old Yeller (1957)', 417: u'Parent Trap, The (1961)', 418: u'Cinderella (1950)', 419: u'Mary Poppins (1964)', 420: u'Alice in Wonderland (1951)', 421: u\"William Shakespeare's Romeo and Juliet (1996)\", 422: u'Aladdin and the King of Thieves (1996)', 423: u'E.T. the Extra-Terrestrial (1982)', 424: u'Children of the Corn: The Gathering (1996)', 425: u'Bob Roberts (1992)', 426: u'Transformers: The Movie, The (1986)', 427: u'To Kill a Mockingbird (1962)', 428: u'Harold and Maude (1971)', 429: u'Day the Earth Stood Still, The (1951)', 430: u'Duck Soup (1933)', 431: u'Highlander (1986)', 432: u'Fantasia (1940)', 433: u'Heathers (1989)', 434: u'Forbidden Planet (1956)', 435: u'Butch Cassidy and the Sundance Kid (1969)', 436: u'American Werewolf in London, An (1981)', 437: u\"Amityville 1992: It's About Time (1992)\", 438: u'Amityville 3-D (1983)', 439: u'Amityville: A New Generation (1993)', 440: u'Amityville II: The Possession (1982)', 441: u'Amityville Horror, The (1979)', 442: u'Amityville Curse, The (1990)', 443: u'Birds, The (1963)', 444: u'Blob, The (1958)', 445: u'Body Snatcher, The (1945)', 446: u'Burnt Offerings (1976)', 447: u'Carrie (1976)', 448: u'Omen, The (1976)', 449: u'Star Trek: The Motion Picture (1979)', 450: u'Star Trek V: The Final Frontier (1989)', 451: u'Grease (1978)', 452: u'Jaws 2 (1978)', 453: u'Jaws 3-D (1983)', 454: u'Bastard Out of Carolina (1996)', 455: u\"Jackie Chan's First Strike (1996)\", 456: u'Beverly Hills Ninja (1997)', 457: u'Free Willy 3: The Rescue (1997)', 458: u'Nixon (1995)', 459: u'Cry, the Beloved Country (1995)', 460: u'Crossing Guard, The (1995)', 461: u'Smoke (1995)', 462: u'Like Water For Chocolate (Como agua para chocolate) (1992)', 463: u'Secret of Roan Inish, The (1994)', 464: u'Vanya on 42nd Street (1994)', 465: u'Jungle Book, The (1994)', 466: u'Red Rock West (1992)', 467: u'Bronx Tale, A (1993)', 468: u'Rudy (1993)', 469: u'Short Cuts (1993)', 470: u'Tombstone (1993)', 471: u'Courage Under Fire (1996)', 472: u'Dragonheart (1996)', 473: u'James and the Giant Peach (1996)', 474: u'Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb (1963)', 475: u'Trainspotting (1996)', 476: u'First Wives Club, The (1996)', 477: u'Matilda (1996)', 478: u'Philadelphia Story, The (1940)', 479: u'Vertigo (1958)', 480: u'North by Northwest (1959)', 481: u'Apartment, The (1960)', 482: u'Some Like It Hot (1959)', 483: u'Casablanca (1942)', 484: u'Maltese Falcon, The (1941)', 485: u'My Fair Lady (1964)', 486: u'Sabrina (1954)', 487: u'Roman Holiday (1953)', 488: u'Sunset Blvd. (1950)', 489: u'Notorious (1946)', 490: u'To Catch a Thief (1955)', 491: u'Adventures of Robin Hood, The (1938)', 492: u'East of Eden (1955)', 493: u'Thin Man, The (1934)', 494: u'His Girl Friday (1940)', 495: u'Around the World in 80 Days (1956)', 496: u\"It's a Wonderful Life (1946)\", 497: u'Bringing Up Baby (1938)', 498: u'African Queen, The (1951)', 499: u'Cat on a Hot Tin Roof (1958)', 500: u'Fly Away Home (1996)', 501: u'Dumbo (1941)', 502: u'Bananas (1971)', 503: u'Candidate, The (1972)', 504: u'Bonnie and Clyde (1967)', 505: u'Dial M for Murder (1954)', 506: u'Rebel Without a Cause (1955)', 507: u'Streetcar Named Desire, A (1951)', 508: u'People vs. Larry Flynt, The (1996)', 509: u'My Left Foot (1989)', 510: u'Magnificent Seven, The (1954)', 511: u'Lawrence of Arabia (1962)', 512: u'Wings of Desire (1987)', 513: u'Third Man, The (1949)', 514: u'Annie Hall (1977)', 515: u'Boot, Das (1981)', 516: u'Local Hero (1983)', 517: u'Manhattan (1979)', 518: u\"Miller's Crossing (1990)\", 519: u'Treasure of the Sierra Madre, The (1948)', 520: u'Great Escape, The (1963)', 521: u'Deer Hunter, The (1978)', 522: u'Down by Law (1986)', 523: u'Cool Hand Luke (1967)', 524: u'Great Dictator, The (1940)', 525: u'Big Sleep, The (1946)', 526: u'Ben-Hur (1959)', 527: u'Gandhi (1982)', 528: u'Killing Fields, The (1984)', 529: u'My Life as a Dog (Mitt liv som hund) (1985)', 530: u'Man Who Would Be King, The (1975)', 531: u'Shine (1996)', 532: u'Kama Sutra: A Tale of Love (1996)', 533: u'Daytrippers, The (1996)', 534: u'Traveller (1997)', 535: u'Addicted to Love (1997)', 536: u'Ponette (1996)', 537: u'My Own Private Idaho (1991)', 538: u'Anastasia (1997)', 539: u'Mouse Hunt (1997)', 540: u'Money Train (1995)', 541: u'Mortal Kombat (1995)', 542: u'Pocahontas (1995)', 543: u'Mis\\ufffdrables, Les (1995)', 544: u\"Things to Do in Denver when You're Dead (1995)\", 545: u'Vampire in Brooklyn (1995)', 546: u'Broken Arrow (1996)', 547: u\"Young Poisoner's Handbook, The (1995)\", 548: u'NeverEnding Story III, The (1994)', 549: u'Rob Roy (1995)', 550: u'Die Hard: With a Vengeance (1995)', 551: u'Lord of Illusions (1995)', 552: u'Species (1995)', 553: u'Walk in the Clouds, A (1995)', 554: u'Waterworld (1995)', 555: u\"White Man's Burden (1995)\", 556: u'Wild Bill (1995)', 557: u'Farinelli: il castrato (1994)', 558: u'Heavenly Creatures (1994)', 559: u'Interview with the Vampire (1994)', 560: u\"Kid in King Arthur's Court, A (1995)\", 561: u\"Mary Shelley's Frankenstein (1994)\", 562: u'Quick and the Dead, The (1995)', 563: u\"Stephen King's The Langoliers (1995)\", 564: u'Tales from the Hood (1995)', 565: u'Village of the Damned (1995)', 566: u'Clear and Present Danger (1994)', 567: u\"Wes Craven's New Nightmare (1994)\", 568: u'Speed (1994)', 569: u'Wolf (1994)', 570: u'Wyatt Earp (1994)', 571: u'Another Stakeout (1993)', 572: u'Blown Away (1994)', 573: u'Body Snatchers (1993)', 574: u'Boxing Helena (1993)', 575: u\"City Slickers II: The Legend of Curly's Gold (1994)\", 576: u'Cliffhanger (1993)', 577: u'Coneheads (1993)', 578: u'Demolition Man (1993)', 579: u'Fatal Instinct (1993)', 580: u'Englishman Who Went Up a Hill, But Came Down a Mountain, The (1995)', 581: u'Kalifornia (1993)', 582: u'Piano, The (1993)', 583: u'Romeo Is Bleeding (1993)', 584: u'Secret Garden, The (1993)', 585: u'Son in Law (1993)', 586: u'Terminal Velocity (1994)', 587: u'Hour of the Pig, The (1993)', 588: u'Beauty and the Beast (1991)', 589: u'Wild Bunch, The (1969)', 590: u'Hellraiser: Bloodline (1996)', 591: u'Primal Fear (1996)', 592: u'True Crime (1995)', 593: u'Stalingrad (1993)', 594: u'Heavy (1995)', 595: u'Fan, The (1996)', 596: u'Hunchback of Notre Dame, The (1996)', 597: u'Eraser (1996)', 598: u'Big Squeeze, The (1996)', 599: u'Police Story 4: Project S (Chao ji ji hua) (1993)', 600: u\"Daniel Defoe's Robinson Crusoe (1996)\", 601: u'For Whom the Bell Tolls (1943)', 602: u'American in Paris, An (1951)', 603: u'Rear Window (1954)', 604: u'It Happened One Night (1934)', 605: u'Meet Me in St. Louis (1944)', 606: u'All About Eve (1950)', 607: u'Rebecca (1940)', 608: u'Spellbound (1945)', 609: u'Father of the Bride (1950)', 610: u'Gigi (1958)', 611: u'Laura (1944)', 612: u'Lost Horizon (1937)', 613: u'My Man Godfrey (1936)', 614: u'Giant (1956)', 615: u'39 Steps, The (1935)', 616: u'Night of the Living Dead (1968)', 617: u'Blue Angel, The (Blaue Engel, Der) (1930)', 618: u'Picnic (1955)', 619: u'Extreme Measures (1996)', 620: u'Chamber, The (1996)', 621: u'Davy Crockett, King of the Wild Frontier (1955)', 622: u'Swiss Family Robinson (1960)', 623: u'Angels in the Outfield (1994)', 624: u'Three Caballeros, The (1945)', 625: u'Sword in the Stone, The (1963)', 626: u'So Dear to My Heart (1949)', 627: u'Robin Hood: Prince of Thieves (1991)', 628: u'Sleepers (1996)', 629: u'Victor/Victoria (1982)', 630: u'Great Race, The (1965)', 631: u'Crying Game, The (1992)', 632: u\"Sophie's Choice (1982)\", 633: u'Christmas Carol, A (1938)', 634: u\"Microcosmos: Le peuple de l'herbe (1996)\", 635: u'Fog, The (1980)', 636: u'Escape from New York (1981)', 637: u'Howling, The (1981)', 638: u'Return of Martin Guerre, The (Retour de Martin Guerre, Le) (1982)', 639: u'Tin Drum, The (Blechtrommel, Die) (1979)', 640: u'Cook the Thief His Wife & Her Lover, The (1989)', 641: u'Paths of Glory (1957)', 642: u'Grifters, The (1990)', 643: u'The Innocent (1994)', 644: u'Thin Blue Line, The (1988)', 645: u'Paris Is Burning (1990)', 646: u'Once Upon a Time in the West (1969)', 647: u'Ran (1985)', 648: u'Quiet Man, The (1952)', 649: u'Once Upon a Time in America (1984)', 650: u'Seventh Seal, The (Sjunde inseglet, Det) (1957)', 651: u'Glory (1989)', 652: u'Rosencrantz and Guildenstern Are Dead (1990)', 653: u'Touch of Evil (1958)', 654: u'Chinatown (1974)', 655: u'Stand by Me (1986)', 656: u'M (1931)', 657: u'Manchurian Candidate, The (1962)', 658: u'Pump Up the Volume (1990)', 659: u'Arsenic and Old Lace (1944)', 660: u'Fried Green Tomatoes (1991)', 661: u'High Noon (1952)', 662: u'Somewhere in Time (1980)', 663: u'Being There (1979)', 664: u'Paris, Texas (1984)', 665: u'Alien 3 (1992)', 666: u\"Blood For Dracula (Andy Warhol's Dracula) (1974)\", 667: u'Audrey Rose (1977)', 668: u'Blood Beach (1981)', 669: u'Body Parts (1991)', 670: u'Body Snatchers (1993)', 671: u'Bride of Frankenstein (1935)', 672: u'Candyman (1992)', 673: u'Cape Fear (1962)', 674: u'Cat People (1982)', 675: u'Nosferatu (Nosferatu, eine Symphonie des Grauens) (1922)', 676: u'Crucible, The (1996)', 677: u'Fire on the Mountain (1996)', 678: u'Volcano (1997)', 679: u'Conan the Barbarian (1981)', 680: u'Kull the Conqueror (1997)', 681: u'Wishmaster (1997)', 682: u'I Know What You Did Last Summer (1997)', 683: u'Rocket Man (1997)', 684: u'In the Line of Fire (1993)', 685: u'Executive Decision (1996)', 686: u'Perfect World, A (1993)', 687: u\"McHale's Navy (1997)\", 688: u'Leave It to Beaver (1997)', 689: u'Jackal, The (1997)', 690: u'Seven Years in Tibet (1997)', 691: u'Dark City (1998)', 692: u'American President, The (1995)', 693: u'Casino (1995)', 694: u'Persuasion (1995)', 695: u'Kicking and Screaming (1995)', 696: u'City Hall (1996)', 697: u'Basketball Diaries, The (1995)', 698: u'Browning Version, The (1994)', 699: u'Little Women (1994)', 700: u'Miami Rhapsody (1995)', 701: u'Wonderful, Horrible Life of Leni Riefenstahl, The (1993)', 702: u'Barcelona (1994)', 703: u\"Widows' Peak (1994)\", 704: u'House of the Spirits, The (1993)', 705: u\"Singin' in the Rain (1952)\", 706: u'Bad Moon (1996)', 707: u'Enchanted April (1991)', 708: u'Sex, Lies, and Videotape (1989)', 709: u'Strictly Ballroom (1992)', 710: u'Better Off Dead... (1985)', 711: u'Substance of Fire, The (1996)', 712: u'Tin Men (1987)', 713: u'Othello (1995)', 714: u'Carrington (1995)', 715: u'To Die For (1995)', 716: u'Home for the Holidays (1995)', 717: u'Juror, The (1996)', 718: u'In the Bleak Midwinter (1995)', 719: u'Canadian Bacon (1994)', 720: u'First Knight (1995)', 721: u'Mallrats (1995)', 722: u'Nine Months (1995)', 723: u'Boys on the Side (1995)', 724: u'Circle of Friends (1995)', 725: u'Exit to Eden (1994)', 726: u'Fluke (1995)', 727: u'Immortal Beloved (1994)', 728: u'Junior (1994)', 729: u'Nell (1994)', 730: u'Queen Margot (Reine Margot, La) (1994)', 731: u'Corrina, Corrina (1994)', 732: u'Dave (1993)', 733: u'Go Fish (1994)', 734: u'Made in America (1993)', 735: u'Philadelphia (1993)', 736: u'Shadowlands (1993)', 737: u'Sirens (1994)', 738: u'Threesome (1994)', 739: u'Pretty Woman (1990)', 740: u'Jane Eyre (1996)', 741: u'Last Supper, The (1995)', 742: u'Ransom (1996)', 743: u'Crow: City of Angels, The (1996)', 744: u'Michael Collins (1996)', 745: u'Ruling Class, The (1972)', 746: u'Real Genius (1985)', 747: u'Benny & Joon (1993)', 748: u'Saint, The (1997)', 749: u'MatchMaker, The (1997)', 750: u'Amistad (1997)', 751: u'Tomorrow Never Dies (1997)', 752: u'Replacement Killers, The (1998)', 753: u'Burnt By the Sun (1994)', 754: u'Red Corner (1997)', 755: u'Jumanji (1995)', 756: u'Father of the Bride Part II (1995)', 757: u'Across the Sea of Time (1995)', 758: u'Lawnmower Man 2: Beyond Cyberspace (1996)', 759: u'Fair Game (1995)', 760: u'Screamers (1995)', 761: u'Nick of Time (1995)', 762: u'Beautiful Girls (1996)', 763: u'Happy Gilmore (1996)', 764: u'If Lucy Fell (1996)', 765: u'Boomerang (1992)', 766: u'Man of the Year (1995)', 767: u'Addiction, The (1995)', 768: u'Casper (1995)', 769: u'Congo (1995)', 770: u'Devil in a Blue Dress (1995)', 771: u'Johnny Mnemonic (1995)', 772: u'Kids (1995)', 773: u'Mute Witness (1994)', 774: u'Prophecy, The (1995)', 775: u'Something to Talk About (1995)', 776: u'Three Wishes (1995)', 777: u'Castle Freak (1995)', 778: u'Don Juan DeMarco (1995)', 779: u'Drop Zone (1994)', 780: u'Dumb & Dumber (1994)', 781: u'French Kiss (1995)', 782: u'Little Odessa (1994)', 783: u'Milk Money (1994)', 784: u'Beyond Bedlam (1993)', 785: u'Only You (1994)', 786: u'Perez Family, The (1995)', 787: u'Roommates (1995)', 788: u'Relative Fear (1994)', 789: u'Swimming with Sharks (1995)', 790: u'Tommy Boy (1995)', 791: u'Baby-Sitters Club, The (1995)', 792: u'Bullets Over Broadway (1994)', 793: u'Crooklyn (1994)', 794: u'It Could Happen to You (1994)', 795: u'Richie Rich (1994)', 796: u'Speechless (1994)', 797: u'Timecop (1994)', 798: u'Bad Company (1995)', 799: u'Boys Life (1995)', 800: u'In the Mouth of Madness (1995)', 801: u'Air Up There, The (1994)', 802: u'Hard Target (1993)', 803: u'Heaven & Earth (1993)', 804: u'Jimmy Hollywood (1994)', 805: u'Manhattan Murder Mystery (1993)', 806: u'Menace II Society (1993)', 807: u'Poetic Justice (1993)', 808: u'Program, The (1993)', 809: u'Rising Sun (1993)', 810: u'Shadow, The (1994)', 811: u'Thirty-Two Short Films About Glenn Gould (1993)', 812: u'Andre (1994)', 813: u'Celluloid Closet, The (1995)', 814: u'Great Day in Harlem, A (1994)', 815: u'One Fine Day (1996)', 816: u'Candyman: Farewell to the Flesh (1995)', 817: u'Frisk (1995)', 818: u'Girl 6 (1996)', 819: u'Eddie (1996)', 820: u'Space Jam (1996)', 821: u'Mrs. Winterbourne (1996)', 822: u'Faces (1968)', 823: u'Mulholland Falls (1996)', 824: u'Great White Hype, The (1996)', 825: u'Arrival, The (1996)', 826: u'Phantom, The (1996)', 827: u'Daylight (1996)', 828: u'Alaska (1996)', 829: u'Fled (1996)', 830: u'Power 98 (1995)', 831: u'Escape from L.A. (1996)', 832: u'Bogus (1996)', 833: u'Bulletproof (1996)', 834: u'Halloween: The Curse of Michael Myers (1995)', 835: u'Gay Divorcee, The (1934)', 836: u'Ninotchka (1939)', 837: u'Meet John Doe (1941)', 838: u'In the Line of Duty 2 (1987)', 839: u'Loch Ness (1995)', 840: u'Last Man Standing (1996)', 841: u'Glimmer Man, The (1996)', 842: u'Pollyanna (1960)', 843: u'Shaggy Dog, The (1959)', 844: u'Freeway (1996)', 845: u'That Thing You Do! (1996)', 846: u'To Gillian on Her 37th Birthday (1996)', 847: u'Looking for Richard (1996)', 848: u'Murder, My Sweet (1944)', 849: u'Days of Thunder (1990)', 850: u'Perfect Candidate, A (1996)', 851: u'Two or Three Things I Know About Her (1966)', 852: u'Bloody Child, The (1996)', 853: u'Braindead (1992)', 854: u'Bad Taste (1987)', 855: u'Diva (1981)', 856: u'Night on Earth (1991)', 857: u'Paris Was a Woman (1995)', 858: u'Amityville: Dollhouse (1996)', 859: u\"April Fool's Day (1986)\", 860: u'Believers, The (1987)', 861: u'Nosferatu a Venezia (1986)', 862: u'Jingle All the Way (1996)', 863: u'Garden of Finzi-Contini, The (Giardino dei Finzi-Contini, Il) (1970)', 864: u'My Fellow Americans (1996)', 865: u'Ice Storm, The (1997)', 866: u'Michael (1996)', 867: u'Whole Wide World, The (1996)', 868: u'Hearts and Minds (1996)', 869: u'Fools Rush In (1997)', 870: u'Touch (1997)', 871: u'Vegas Vacation (1997)', 872: u'Love Jones (1997)', 873: u'Picture Perfect (1997)', 874: u'Career Girls (1997)', 875: u\"She's So Lovely (1997)\", 876: u'Money Talks (1997)', 877: u'Excess Baggage (1997)', 878: u'That Darn Cat! (1997)', 879: u'Peacemaker, The (1997)', 880: u'Soul Food (1997)', 881: u'Money Talks (1997)', 882: u'Washington Square (1997)', 883: u'Telling Lies in America (1997)', 884: u'Year of the Horse (1997)', 885: u'Phantoms (1998)', 886: u'Life Less Ordinary, A (1997)', 887: u\"Eve's Bayou (1997)\", 888: u'One Night Stand (1997)', 889: u'Tango Lesson, The (1997)', 890: u'Mortal Kombat: Annihilation (1997)', 891: u'Bent (1997)', 892: u'Flubber (1997)', 893: u'For Richer or Poorer (1997)', 894: u'Home Alone 3 (1997)', 895: u'Scream 2 (1997)', 896: u'Sweet Hereafter, The (1997)', 897: u'Time Tracers (1995)', 898: u'Postman, The (1997)', 899: u'Winter Guest, The (1997)', 900: u'Kundun (1997)', 901: u'Mr. Magoo (1997)', 902: u'Big Lebowski, The (1998)', 903: u'Afterglow (1997)', 904: u'Ma vie en rose (My Life in Pink) (1997)', 905: u'Great Expectations (1998)', 906: u'Oscar & Lucinda (1997)', 907: u'Vermin (1998)', 908: u'Half Baked (1998)', 909: u'Dangerous Beauty (1998)', 910: u'Nil By Mouth (1997)', 911: u'Twilight (1998)', 912: u'U.S. Marshalls (1998)', 913: u'Love and Death on Long Island (1997)', 914: u'Wild Things (1998)', 915: u'Primary Colors (1998)', 916: u'Lost in Space (1998)', 917: u'Mercury Rising (1998)', 918: u'City of Angels (1998)', 919: u'City of Lost Children, The (1995)', 920: u'Two Bits (1995)', 921: u'Farewell My Concubine (1993)', 922: u'Dead Man (1995)', 923: u'Raise the Red Lantern (1991)', 924: u'White Squall (1996)', 925: u'Unforgettable (1996)', 926: u'Down Periscope (1996)', 927: u'Flower of My Secret, The (Flor de mi secreto, La) (1995)', 928: u'Craft, The (1996)', 929: u'Harriet the Spy (1996)', 930: u'Chain Reaction (1996)', 931: u'Island of Dr. Moreau, The (1996)', 932: u'First Kid (1996)', 933: u'Funeral, The (1996)', 934: u\"Preacher's Wife, The (1996)\", 935: u'Paradise Road (1997)', 936: u'Brassed Off (1996)', 937: u'Thousand Acres, A (1997)', 938: u'Smile Like Yours, A (1997)', 939: u'Murder in the First (1995)', 940: u'Airheads (1994)', 941: u'With Honors (1994)', 942: u\"What's Love Got to Do with It (1993)\", 943: u'Killing Zoe (1994)', 944: u'Renaissance Man (1994)', 945: u'Charade (1963)', 946: u'Fox and the Hound, The (1981)', 947: u'Big Blue, The (Grand bleu, Le) (1988)', 948: u'Booty Call (1997)', 949: u'How to Make an American Quilt (1995)', 950: u'Georgia (1995)', 951: u'Indian in the Cupboard, The (1995)', 952: u'Blue in the Face (1995)', 953: u'Unstrung Heroes (1995)', 954: u'Unzipped (1995)', 955: u'Before Sunrise (1995)', 956: u\"Nobody's Fool (1994)\", 957: u'Pushing Hands (1992)', 958: u'To Live (Huozhe) (1994)', 959: u'Dazed and Confused (1993)', 960: u'Naked (1993)', 961: u'Orlando (1993)', 962: u'Ruby in Paradise (1993)', 963: u'Some Folks Call It a Sling Blade (1993)', 964: u'Month by the Lake, A (1995)', 965: u'Funny Face (1957)', 966: u'Affair to Remember, An (1957)', 967: u'Little Lord Fauntleroy (1936)', 968: u'Inspector General, The (1949)', 969: u'Winnie the Pooh and the Blustery Day (1968)', 970: u'Hear My Song (1991)', 971: u'Mediterraneo (1991)', 972: u'Passion Fish (1992)', 973: u'Grateful Dead (1995)', 974: u'Eye for an Eye (1996)', 975: u'Fear (1996)', 976: u'Solo (1996)', 977: u'Substitute, The (1996)', 978: u\"Heaven's Prisoners (1996)\", 979: u'Trigger Effect, The (1996)', 980: u'Mother Night (1996)', 981: u'Dangerous Ground (1997)', 982: u'Maximum Risk (1996)', 983: u\"Rich Man's Wife, The (1996)\", 984: u'Shadow Conspiracy (1997)', 985: u'Blood & Wine (1997)', 986: u'Turbulence (1997)', 987: u'Underworld (1997)', 988: u'Beautician and the Beast, The (1997)', 989: u\"Cats Don't Dance (1997)\", 990: u'Anna Karenina (1997)', 991: u'Keys to Tulsa (1997)', 992: u'Head Above Water (1996)', 993: u'Hercules (1997)', 994: u'Last Time I Committed Suicide, The (1997)', 995: u'Kiss Me, Guido (1997)', 996: u'Big Green, The (1995)', 997: u'Stuart Saves His Family (1995)', 998: u'Cabin Boy (1994)', 999: u'Clean Slate (1994)', 1000: u'Lightning Jack (1994)', 1001: u'Stupids, The (1996)', 1002: u'Pest, The (1997)', 1003: u'That Darn Cat! (1997)', 1004: u'Geronimo: An American Legend (1993)', 1005: u'Double vie de V\\ufffdronique, La (Double Life of Veronique, The) (1991)', 1006: u'Until the End of the World (Bis ans Ende der Welt) (1991)', 1007: u'Waiting for Guffman (1996)', 1008: u'I Shot Andy Warhol (1996)', 1009: u'Stealing Beauty (1996)', 1010: u'Basquiat (1996)', 1011: u'2 Days in the Valley (1996)', 1012: u'Private Parts (1997)', 1013: u'Anaconda (1997)', 1014: u\"Romy and Michele's High School Reunion (1997)\", 1015: u'Shiloh (1997)', 1016: u'Con Air (1997)', 1017: u'Trees Lounge (1996)', 1018: u'Tie Me Up! Tie Me Down! (1990)', 1019: u'Die xue shuang xiong (Killer, The) (1989)', 1020: u'Gaslight (1944)', 1021: u'8 1/2 (1963)', 1022: u'Fast, Cheap & Out of Control (1997)', 1023: u\"Fathers' Day (1997)\", 1024: u'Mrs. Dalloway (1997)', 1025: u'Fire Down Below (1997)', 1026: u'Lay of the Land, The (1997)', 1027: u'Shooter, The (1995)', 1028: u'Grumpier Old Men (1995)', 1029: u'Jury Duty (1995)', 1030: u'Beverly Hillbillies, The (1993)', 1031: u'Lassie (1994)', 1032: u'Little Big League (1994)', 1033: u'Homeward Bound II: Lost in San Francisco (1996)', 1034: u'Quest, The (1996)', 1035: u'Cool Runnings (1993)', 1036: u'Drop Dead Fred (1991)', 1037: u'Grease 2 (1982)', 1038: u'Switchback (1997)', 1039: u'Hamlet (1996)', 1040: u'Two if by Sea (1996)', 1041: u'Forget Paris (1995)', 1042: u'Just Cause (1995)', 1043: u'Rent-a-Kid (1995)', 1044: u'Paper, The (1994)', 1045: u'Fearless (1993)', 1046: u'Malice (1993)', 1047: u'Multiplicity (1996)', 1048: u\"She's the One (1996)\", 1049: u'House Arrest (1996)', 1050: u'Ghost and Mrs. Muir, The (1947)', 1051: u'Associate, The (1996)', 1052: u'Dracula: Dead and Loving It (1995)', 1053: u'Now and Then (1995)', 1054: u'Mr. Wrong (1996)', 1055: u'Simple Twist of Fate, A (1994)', 1056: u'Cronos (1992)', 1057: u'Pallbearer, The (1996)', 1058: u'War, The (1994)', 1059: u\"Don't Be a Menace to South Central While Drinking Your Juice in the Hood (1996)\", 1060: u'Adventures of Pinocchio, The (1996)', 1061: u'Evening Star, The (1996)', 1062: u'Four Days in September (1997)', 1063: u'Little Princess, A (1995)', 1064: u'Crossfire (1947)', 1065: u'Koyaanisqatsi (1983)', 1066: u'Balto (1995)', 1067: u'Bottle Rocket (1996)', 1068: u\"Star Maker, The (Uomo delle stelle, L') (1995)\", 1069: u'Amateur (1994)', 1070: u'Living in Oblivion (1995)', 1071: u'Party Girl (1995)', 1072: u\"Pyromaniac's Love Story, A (1995)\", 1073: u'Shallow Grave (1994)', 1074: u'Reality Bites (1994)', 1075: u'Man of No Importance, A (1994)', 1076: u'Pagemaster, The (1994)', 1077: u'Love and a .45 (1994)', 1078: u'Oliver & Company (1988)', 1079: u\"Joe's Apartment (1996)\", 1080: u'Celestial Clockwork (1994)', 1081: u'Curdled (1996)', 1082: u'Female Perversions (1996)', 1083: u'Albino Alligator (1996)', 1084: u'Anne Frank Remembered (1995)', 1085: u'Carried Away (1996)', 1086: u\"It's My Party (1995)\", 1087: u'Bloodsport 2 (1995)', 1088: u'Double Team (1997)', 1089: u'Speed 2: Cruise Control (1997)', 1090: u'Sliver (1993)', 1091: u\"Pete's Dragon (1977)\", 1092: u'Dear God (1996)', 1093: u'Live Nude Girls (1995)', 1094: u'Thin Line Between Love and Hate, A (1996)', 1095: u'High School High (1996)', 1096: u'Commandments (1997)', 1097: u'Hate (Haine, La) (1995)', 1098: u'Flirting With Disaster (1996)', 1099: u'Red Firecracker, Green Firecracker (1994)', 1100: u'What Happened Was... (1994)', 1101: u'Six Degrees of Separation (1993)', 1102: u'Two Much (1996)', 1103: u'Trust (1990)', 1104: u\"C'est arriv\\ufffd pr\\ufffds de chez vous (1992)\", 1105: u'Firestorm (1998)', 1106: u'Newton Boys, The (1998)', 1107: u'Beyond Rangoon (1995)', 1108: u'Feast of July (1995)', 1109: u'Death and the Maiden (1994)', 1110: u'Tank Girl (1995)', 1111: u'Double Happiness (1994)', 1112: u'Cobb (1994)', 1113: u'Mrs. Parker and the Vicious Circle (1994)', 1114: u'Faithful (1996)', 1115: u'Twelfth Night (1996)', 1116: u'Mark of Zorro, The (1940)', 1117: u'Surviving Picasso (1996)', 1118: u'Up in Smoke (1978)', 1119: u'Some Kind of Wonderful (1987)', 1120: u\"I'm Not Rappaport (1996)\", 1121: u'Umbrellas of Cherbourg, The (Parapluies de Cherbourg, Les) (1964)', 1122: u'They Made Me a Criminal (1939)', 1123: u'Last Time I Saw Paris, The (1954)', 1124: u'Farewell to Arms, A (1932)', 1125: u'Innocents, The (1961)', 1126: u'Old Man and the Sea, The (1958)', 1127: u'Truman Show, The (1998)', 1128: u'Heidi Fleiss: Hollywood Madam (1995) ', 1129: u'Chungking Express (1994)', 1130: u\"Jupiter's Wife (1994)\", 1131: u'Safe (1995)', 1132: u'Feeling Minnesota (1996)', 1133: u'Escape to Witch Mountain (1975)', 1134: u'Get on the Bus (1996)', 1135: u'Doors, The (1991)', 1136: u'Ghosts of Mississippi (1996)', 1137: u'Beautiful Thing (1996)', 1138: u'Best Men (1997)', 1139: u'Hackers (1995)', 1140: u'Road to Wellville, The (1994)', 1141: u'War Room, The (1993)', 1142: u'When We Were Kings (1996)', 1143: u'Hard Eight (1996)', 1144: u'Quiet Room, The (1996)', 1145: u'Blue Chips (1994)', 1146: u'Calendar Girl (1993)', 1147: u'My Family (1995)', 1148: u'Tom & Viv (1994)', 1149: u'Walkabout (1971)', 1150: u'Last Dance (1996)', 1151: u'Original Gangstas (1996)', 1152: u'In Love and War (1996)', 1153: u'Backbeat (1993)', 1154: u'Alphaville (1965)', 1155: u'Rendezvous in Paris (Rendez-vous de Paris, Les) (1995)', 1156: u'Cyclo (1995)', 1157: u'Relic, The (1997)', 1158: u'Fille seule, La (A Single Girl) (1995)', 1159: u'Stalker (1979)', 1160: u'Love! Valour! Compassion! (1997)', 1161: u'Palookaville (1996)', 1162: u'Phat Beach (1996)', 1163: u'Portrait of a Lady, The (1996)', 1164: u'Zeus and Roxanne (1997)', 1165: u'Big Bully (1996)', 1166: u'Love & Human Remains (1993)', 1167: u'Sum of Us, The (1994)', 1168: u'Little Buddha (1993)', 1169: u'Fresh (1994)', 1170: u'Spanking the Monkey (1994)', 1171: u'Wild Reeds (1994)', 1172: u'Women, The (1939)', 1173: u'Bliss (1997)', 1174: u'Caught (1996)', 1175: u'Hugo Pool (1997)', 1176: u'Welcome To Sarajevo (1997)', 1177: u'Dunston Checks In (1996)', 1178: u'Major Payne (1994)', 1179: u'Man of the House (1995)', 1180: u'I Love Trouble (1994)', 1181: u'Low Down Dirty Shame, A (1994)', 1182: u'Cops and Robbersons (1994)', 1183: u'Cowboy Way, The (1994)', 1184: u'Endless Summer 2, The (1994)', 1185: u'In the Army Now (1994)', 1186: u'Inkwell, The (1994)', 1187: u'Switchblade Sisters (1975)', 1188: u'Young Guns II (1990)', 1189: u'Prefontaine (1997)', 1190: u'That Old Feeling (1997)', 1191: u'Letter From Death Row, A (1998)', 1192: u'Boys of St. Vincent, The (1993)', 1193: u'Before the Rain (Pred dozhdot) (1994)', 1194: u'Once Were Warriors (1994)', 1195: u'Strawberry and Chocolate (Fresa y chocolate) (1993)', 1196: u'Savage Nights (Nuits fauves, Les) (1992)', 1197: u'Family Thing, A (1996)', 1198: u'Purple Noon (1960)', 1199: u'Cemetery Man (Dellamorte Dellamore) (1994)', 1200: u'Kim (1950)', 1201: u'Marlene Dietrich: Shadow and Light (1996) ', 1202: u'Maybe, Maybe Not (Bewegte Mann, Der) (1994)', 1203: u'Top Hat (1935)', 1204: u'To Be or Not to Be (1942)', 1205: u'Secret Agent, The (1996)', 1206: u'Amos & Andrew (1993)', 1207: u'Jade (1995)', 1208: u'Kiss of Death (1995)', 1209: u'Mixed Nuts (1994)', 1210: u'Virtuosity (1995)', 1211: u'Blue Sky (1994)', 1212: u'Flesh and Bone (1993)', 1213: u'Guilty as Sin (1993)', 1214: u'In the Realm of the Senses (Ai no corrida) (1976)', 1215: u'Barb Wire (1996)', 1216: u'Kissed (1996)', 1217: u'Assassins (1995)', 1218: u'Friday (1995)', 1219: u'Goofy Movie, A (1995)', 1220: u'Higher Learning (1995)', 1221: u'When a Man Loves a Woman (1994)', 1222: u'Judgment Night (1993)', 1223: u'King of the Hill (1993)', 1224: u'Scout, The (1994)', 1225: u'Angus (1995)', 1226: u'Night Falls on Manhattan (1997)', 1227: u'Awfully Big Adventure, An (1995)', 1228: u'Under Siege 2: Dark Territory (1995)', 1229: u'Poison Ivy II (1995)', 1230: u'Ready to Wear (Pret-A-Porter) (1994)', 1231: u'Marked for Death (1990)', 1232: u'Madonna: Truth or Dare (1991)', 1233: u'N\\ufffdnette et Boni (1996)', 1234: u'Chairman of the Board (1998)', 1235: u'Big Bang Theory, The (1994)', 1236: u'Other Voices, Other Rooms (1997)', 1237: u'Twisted (1996)', 1238: u'Full Speed (1996)', 1239: u'Cutthroat Island (1995)', 1240: u'Ghost in the Shell (Kokaku kidotai) (1995)', 1241: u'Van, The (1996)', 1242: u'Old Lady Who Walked in the Sea, The (Vieille qui marchait dans la mer, La) (1991)', 1243: u'Night Flier (1997)', 1244: u'Metro (1997)', 1245: u\"Gridlock'd (1997)\", 1246: u'Bushwhacked (1995)', 1247: u'Bad Girls (1994)', 1248: u'Blink (1994)', 1249: u'For Love or Money (1993)', 1250: u'Best of the Best 3: No Turning Back (1995)', 1251: u'A Chef in Love (1996)', 1252: u'Contempt (M\\ufffdpris, Le) (1963)', 1253: u'Tie That Binds, The (1995)', 1254: u\"Gone Fishin' (1997)\", 1255: u'Broken English (1996)', 1256: u'Designated Mourner, The (1997)', 1257: u'Designated Mourner, The (1997)', 1258: u'Trial and Error (1997)', 1259: u'Pie in the Sky (1995)', 1260: u'Total Eclipse (1995)', 1261: u'Run of the Country, The (1995)', 1262: u'Walking and Talking (1996)', 1263: u'Foxfire (1996)', 1264: u'Nothing to Lose (1994)', 1265: u'Star Maps (1997)', 1266: u'Bread and Chocolate (Pane e cioccolata) (1973)', 1267: u'Clockers (1995)', 1268: u'Bitter Moon (1992)', 1269: u'Love in the Afternoon (1957)', 1270: u'Life with Mikey (1993)', 1271: u'North (1994)', 1272: u'Talking About Sex (1994)', 1273: u'Color of Night (1994)', 1274: u'Robocop 3 (1993)', 1275: u'Killer (Bulletproof Heart) (1994)', 1276: u'Sunset Park (1996)', 1277: u'Set It Off (1996)', 1278: u'Selena (1997)', 1279: u'Wild America (1997)', 1280: u'Gang Related (1997)', 1281: u'Manny & Lo (1996)', 1282: u'Grass Harp, The (1995)', 1283: u'Out to Sea (1997)', 1284: u'Before and After (1996)', 1285: u'Princess Caraboo (1994)', 1286: u'Shall We Dance? (1937)', 1287: u'Ed (1996)', 1288: u'Denise Calls Up (1995)', 1289: u'Jack and Sarah (1995)', 1290: u'Country Life (1994)', 1291: u'Celtic Pride (1996)', 1292: u'Simple Wish, A (1997)', 1293: u'Star Kid (1997)', 1294: u'Ayn Rand: A Sense of Life (1997)', 1295: u'Kicked in the Head (1997)', 1296: u'Indian Summer (1996)', 1297: u'Love Affair (1994)', 1298: u'Band Wagon, The (1953)', 1299: u'Penny Serenade (1941)', 1300: u\"'Til There Was You (1997)\", 1301: u'Stripes (1981)', 1302: u'Late Bloomers (1996)', 1303: u'Getaway, The (1994)', 1304: u'New York Cop (1996)', 1305: u\"National Lampoon's Senior Trip (1995)\", 1306: u'Delta of Venus (1994)', 1307: u'Carmen Miranda: Bananas Is My Business (1994)', 1308: u'Babyfever (1994)', 1309: u'Very Natural Thing, A (1974)', 1310: u'Walk in the Sun, A (1945)', 1311: u'Waiting to Exhale (1995)', 1312: u'Pompatus of Love, The (1996)', 1313: u'Palmetto (1998)', 1314: u'Surviving the Game (1994)', 1315: u'Inventing the Abbotts (1997)', 1316: u'Horse Whisperer, The (1998)', 1317: u'Journey of August King, The (1995)', 1318: u'Catwalk (1995)', 1319: u'Neon Bible, The (1995)', 1320: u'Homage (1995)', 1321: u'Open Season (1996)', 1322: u'Metisse (Caf\\ufffd au Lait) (1993)', 1323: u\"Wooden Man's Bride, The (Wu Kui) (1994)\", 1324: u'Loaded (1994)', 1325: u'August (1996)', 1326: u'Boys (1996)', 1327: u'Captives (1994)', 1328: u'Of Love and Shadows (1994)', 1329: u'Low Life, The (1994)', 1330: u'An Unforgettable Summer (1994)', 1331: u'Last Klezmer: Leopold Kozlowski, His Life and Music, The (1995)', 1332: u\"My Life and Times With Antonin Artaud (En compagnie d'Antonin Artaud) (1993)\", 1333: u'Midnight Dancers (Sibak) (1994)', 1334: u'Somebody to Love (1994)', 1335: u'American Buffalo (1996)', 1336: u'Kazaam (1996)', 1337: u'Larger Than Life (1996)', 1338: u'Two Deaths (1995)', 1339: u'Stefano Quantestorie (1993)', 1340: u'Crude Oasis, The (1995)', 1341: u'Hedd Wyn (1992)', 1342: u'Convent, The (Convento, O) (1995)', 1343: u'Lotto Land (1995)', 1344: u'Story of Xinghua, The (1993)', 1345: u'Day the Sun Turned Cold, The (Tianguo niezi) (1994)', 1346: u'Dingo (1992)', 1347: u'Ballad of Narayama, The (Narayama Bushiko) (1958)', 1348: u'Every Other Weekend (1990)', 1349: u'Mille bolle blu (1993)', 1350: u'Crows and Sparrows (1949)', 1351: u\"Lover's Knot (1996)\", 1352: u'Shadow of Angels (Schatten der Engel) (1976)', 1353: u'1-900 (1994)', 1354: u'Venice/Venice (1992)', 1355: u'Infinity (1996)', 1356: u\"Ed's Next Move (1996)\", 1357: u'For the Moment (1994)', 1358: u'The Deadly Cure (1996)', 1359: u'Boys in Venice (1996)', 1360: u'Sexual Life of the Belgians, The (1994)', 1361: u'Search for One-eye Jimmy, The (1996)', 1362: u'American Strays (1996)', 1363: u'Leopard Son, The (1996)', 1364: u'Bird of Prey (1996)', 1365: u'Johnny 100 Pesos (1993)', 1366: u'JLG/JLG - autoportrait de d\\ufffdcembre (1994)', 1367: u'Faust (1994)', 1368: u'Mina Tannenbaum (1994)', 1369: u'Forbidden Christ, The (Cristo proibito, Il) (1950)', 1370: u\"I Can't Sleep (J'ai pas sommeil) (1994)\", 1371: u'Machine, The (1994)', 1372: u'Stranger, The (1994)', 1373: u'Good Morning (1971)', 1374: u'Falling in Love Again (1980)', 1375: u'Cement Garden, The (1993)', 1376: u'Meet Wally Sparks (1997)', 1377: u'Hotel de Love (1996)', 1378: u'Rhyme & Reason (1997)', 1379: u'Love and Other Catastrophes (1996)', 1380: u'Hollow Reed (1996)', 1381: u'Losing Chase (1996)', 1382: u'Bonheur, Le (1965)', 1383: u'Second Jungle Book: Mowgli & Baloo, The (1997)', 1384: u'Squeeze (1996)', 1385: u\"Roseanna's Grave (For Roseanna) (1997)\", 1386: u'Tetsuo II: Body Hammer (1992)', 1387: u'Fall (1997)', 1388: u'Gabbeh (1996)', 1389: u'Mondo (1996)', 1390: u'Innocent Sleep, The (1995)', 1391: u'For Ever Mozart (1996)', 1392: u'Locusts, The (1997)', 1393: u'Stag (1997)', 1394: u'Swept from the Sea (1997)', 1395: u'Hurricane Streets (1998)', 1396: u'Stonewall (1995)', 1397: u'Of Human Bondage (1934)', 1398: u'Anna (1996)', 1399: u'Stranger in the House (1997)', 1400: u'Picture Bride (1995)', 1401: u'M. Butterfly (1993)', 1402: u'Ciao, Professore! (1993)', 1403: u'Caro Diario (Dear Diary) (1994)', 1404: u'Withnail and I (1987)', 1405: u\"Boy's Life 2 (1997)\", 1406: u'When Night Is Falling (1995)', 1407: u'Specialist, The (1994)', 1408: u'Gordy (1995)', 1409: u'Swan Princess, The (1994)', 1410: u'Harlem (1993)', 1411: u'Barbarella (1968)', 1412: u'Land Before Time III: The Time of the Great Giving (1995) (V)', 1413: u'Street Fighter (1994)', 1414: u'Coldblooded (1995)', 1415: u'Next Karate Kid, The (1994)', 1416: u'No Escape (1994)', 1417: u'Turning, The (1992)', 1418: u'Joy Luck Club, The (1993)', 1419: u'Highlander III: The Sorcerer (1994)', 1420: u\"Gilligan's Island: The Movie (1998)\", 1421: u'My Crazy Life (Mi vida loca) (1993)', 1422: u'Suture (1993)', 1423: u'Walking Dead, The (1995)', 1424: u'I Like It Like That (1994)', 1425: u\"I'll Do Anything (1994)\", 1426: u'Grace of My Heart (1996)', 1427: u'Drunks (1995)', 1428: u'SubUrbia (1997)', 1429: u'Sliding Doors (1998)', 1430: u'Ill Gotten Gains (1997)', 1431: u'Legal Deceit (1997)', 1432: u'Mighty, The (1998)', 1433: u'Men of Means (1998)', 1434: u'Shooting Fish (1997)', 1435: u'Steal Big, Steal Little (1995)', 1436: u'Mr. Jones (1993)', 1437: u'House Party 3 (1994)', 1438: u'Panther (1995)', 1439: u\"Jason's Lyric (1994)\", 1440: u'Above the Rim (1994)', 1441: u'Moonlight and Valentino (1995)', 1442: u'Scarlet Letter, The (1995)', 1443: u'8 Seconds (1994)', 1444: u'That Darn Cat! (1965)', 1445: u'Ladybird Ladybird (1994)', 1446: u'Bye Bye, Love (1995)', 1447: u'Century (1993)', 1448: u'My Favorite Season (1993)', 1449: u'Pather Panchali (1955)', 1450: u'Golden Earrings (1947)', 1451: u'Foreign Correspondent (1940)', 1452: u'Lady of Burlesque (1943)', 1453: u'Angel on My Shoulder (1946)', 1454: u'Angel and the Badman (1947)', 1455: u'Outlaw, The (1943)', 1456: u'Beat the Devil (1954)', 1457: u'Love Is All There Is (1996)', 1458: u'Damsel in Distress, A (1937)', 1459: u'Madame Butterfly (1995)', 1460: u'Sleepover (1995)', 1461: u'Here Comes Cookie (1935)', 1462: u'Thieves (Voleurs, Les) (1996)', 1463: u'Boys, Les (1997)', 1464: u'Stars Fell on Henrietta, The (1995)', 1465: u'Last Summer in the Hamptons (1995)', 1466: u\"Margaret's Museum (1995)\", 1467: u'Saint of Fort Washington, The (1993)', 1468: u'Cure, The (1995)', 1469: u'Tom and Huck (1995)', 1470: u'Gumby: The Movie (1995)', 1471: u'Hideaway (1995)', 1472: u'Visitors, The (Visiteurs, Les) (1993)', 1473: u'Little Princess, The (1939)', 1474: u'Nina Takes a Lover (1994)', 1475: u'Bhaji on the Beach (1993)', 1476: u'Raw Deal (1948)', 1477: u'Nightwatch (1997)', 1478: u'Dead Presidents (1995)', 1479: u'Reckless (1995)', 1480: u'Herbie Rides Again (1974)', 1481: u'S.F.W. (1994)', 1482: u'Gate of Heavenly Peace, The (1995)', 1483: u'Man in the Iron Mask, The (1998)', 1484: u'Jerky Boys, The (1994)', 1485: u'Colonel Chabert, Le (1994)', 1486: u'Girl in the Cadillac (1995)', 1487: u'Even Cowgirls Get the Blues (1993)', 1488: u'Germinal (1993)', 1489: u'Chasers (1994)', 1490: u'Fausto (1993)', 1491: u'Tough and Deadly (1995)', 1492: u'Window to Paris (1994)', 1493: u'Modern Affair, A (1995)', 1494: u'Mostro, Il (1994)', 1495: u'Flirt (1995)', 1496: u'Carpool (1996)', 1497: u'Line King: Al Hirschfeld, The (1996)', 1498: u'Farmer & Chase (1995)', 1499: u'Grosse Fatigue (1994)', 1500: u'Santa with Muscles (1996)', 1501: u'Prisoner of the Mountains (Kavkazsky Plennik) (1996)', 1502: u'Naked in New York (1994)', 1503: u'Gold Diggers: The Secret of Bear Mountain (1995)', 1504: u'Bewegte Mann, Der (1994)', 1505: u'Killer: A Journal of Murder (1995)', 1506: u'Nelly & Monsieur Arnaud (1995)', 1507: u'Three Lives and Only One Death (1996)', 1508: u'Babysitter, The (1995)', 1509: u'Getting Even with Dad (1994)', 1510: u'Mad Dog Time (1996)', 1511: u'Children of the Revolution (1996)', 1512: u'World of Apu, The (Apur Sansar) (1959)', 1513: u'Sprung (1997)', 1514: u'Dream With the Fishes (1997)', 1515: u'Wings of Courage (1995)', 1516: u'Wedding Gift, The (1994)', 1517: u'Race the Sun (1996)', 1518: u'Losing Isaiah (1995)', 1519: u'New Jersey Drive (1995)', 1520: u'Fear, The (1995)', 1521: u'Mr. Wonderful (1993)', 1522: u'Trial by Jury (1994)', 1523: u'Good Man in Africa, A (1994)', 1524: u'Kaspar Hauser (1993)', 1525: u'Object of My Affection, The (1998)', 1526: u'Witness (1985)', 1527: u'Senseless (1998)', 1528: u'Nowhere (1997)', 1529: u'Underground (1995)', 1530: u'Jefferson in Paris (1995)', 1531: u'Far From Home: The Adventures of Yellow Dog (1995)', 1532: u'Foreign Student (1994)', 1533: u\"I Don't Want to Talk About It (De eso no se habla) (1993)\", 1534: u'Twin Town (1997)', 1535: u\"Enfer, L' (1994)\", 1536: u'Aiqing wansui (1994)', 1537: u'Cosi (1996)', 1538: u'All Over Me (1997)', 1539: u'Being Human (1993)', 1540: u'Amazing Panda Adventure, The (1995)', 1541: u'Beans of Egypt, Maine, The (1994)', 1542: u'Scarlet Letter, The (1926)', 1543: u'Johns (1996)', 1544: u'It Takes Two (1995)', 1545: u'Frankie Starlight (1995)', 1546: u'Shadows (Cienie) (1988)', 1547: u'Show, The (1995)', 1548: u'The Courtyard (1995)', 1549: u'Dream Man (1995)', 1550: u'Destiny Turns on the Radio (1995)', 1551: u'Glass Shield, The (1994)', 1552: u'Hunted, The (1995)', 1553: u'Underneath, The (1995)', 1554: u'Safe Passage (1994)', 1555: u'Secret Adventures of Tom Thumb, The (1993)', 1556: u'Condition Red (1995)', 1557: u'Yankee Zulu (1994)', 1558: u'Aparajito (1956)', 1559: u'Hostile Intentions (1994)', 1560: u'Clean Slate (Coup de Torchon) (1981)', 1561: u'Tigrero: A Film That Was Never Made (1994)', 1562: u\"Eye of Vichy, The (Oeil de Vichy, L') (1993)\", 1563: u'Promise, The (Versprechen, Das) (1994)', 1564: u'To Cross the Rubicon (1991)', 1565: u'Daens (1992)', 1566: u'Man from Down Under, The (1943)', 1567: u'Careful (1992)', 1568: u'Vermont Is For Lovers (1992)', 1569: u'Vie est belle, La (Life is Rosey) (1987)', 1570: u'Quartier Mozart (1992)', 1571: u'Touki Bouki (Journey of the Hyena) (1973)', 1572: u\"Wend Kuuni (God's Gift) (1982)\", 1573: u'Spirits of the Dead (Tre passi nel delirio) (1968)', 1574: u\"Pharaoh's Army (1995)\", 1575: u'I, Worst of All (Yo, la peor de todas) (1990)', 1576: u'Hungarian Fairy Tale, A (1987)', 1577: u'Death in the Garden (Mort en ce jardin, La) (1956)', 1578: u'Collectionneuse, La (1967)', 1579: u'Baton Rouge (1988)', 1580: u'Liebelei (1933)', 1581: u'Woman in Question, The (1950)', 1582: u'T-Men (1947)', 1583: u'Invitation, The (Zaproszenie) (1986)', 1584: u'Symphonie pastorale, La (1946)', 1585: u'American Dream (1990)', 1586: u'Lashou shentan (1992)', 1587: u'Terror in a Texas Town (1958)', 1588: u'Salut cousin! (1996)', 1589: u'Schizopolis (1996)', 1590: u'To Have, or Not (1995)', 1591: u'Duoluo tianshi (1995)', 1592: u'Magic Hour, The (1998)', 1593: u'Death in Brunswick (1991)', 1594: u'Everest (1998)', 1595: u'Shopping (1994)', 1596: u'Nemesis 2: Nebula (1995)', 1597: u'Romper Stomper (1992)', 1598: u'City of Industry (1997)', 1599: u\"Someone Else's America (1995)\", 1600: u'Guantanamera (1994)', 1601: u'Office Killer (1997)', 1602: u'Price Above Rubies, A (1998)', 1603: u'Angela (1995)', 1604: u'He Walked by Night (1948)', 1605: u'Love Serenade (1996)', 1606: u'Deceiver (1997)', 1607: u'Hurricane Streets (1998)', 1608: u'Buddy (1997)', 1609: u'B*A*P*S (1997)', 1610: u'Truth or Consequences, N.M. (1997)', 1611: u'Intimate Relations (1996)', 1612: u'Leading Man, The (1996)', 1613: u'Tokyo Fist (1995)', 1614: u'Reluctant Debutante, The (1958)', 1615: u'Warriors of Virtue (1997)', 1616: u'Desert Winds (1995)', 1617: u'Hugo Pool (1997)', 1618: u'King of New York (1990)', 1619: u'All Things Fair (1996)', 1620: u'Sixth Man, The (1997)', 1621: u'Butterfly Kiss (1995)', 1622: u'Paris, France (1993)', 1623: u'C\\ufffdr\\ufffdmonie, La (1995)', 1624: u'Hush (1998)', 1625: u'Nightwatch (1997)', 1626: u'Nobody Loves Me (Keiner liebt mich) (1994)', 1627: u'Wife, The (1995)', 1628: u'Lamerica (1994)', 1629: u'Nico Icon (1995)', 1630: u'Silence of the Palace, The (Saimt el Qusur) (1994)', 1631: u'Slingshot, The (1993)', 1632: u'Land and Freedom (Tierra y libertad) (1995)', 1633: u'\\ufffd k\\ufffdldum klaka (Cold Fever) (1994)', 1634: u'Etz Hadomim Tafus (Under the Domin Tree) (1994)', 1635: u'Two Friends (1986) ', 1636: u'Brothers in Trouble (1995)', 1637: u'Girls Town (1996)', 1638: u'Normal Life (1996)', 1639: u'Bitter Sugar (Azucar Amargo) (1996)', 1640: u'Eighth Day, The (1996)', 1641: u'Dadetown (1995)', 1642: u\"Some Mother's Son (1996)\", 1643: u'Angel Baby (1995)', 1644: u'Sudden Manhattan (1996)', 1645: u'Butcher Boy, The (1998)', 1646: u'Men With Guns (1997)', 1647: u'Hana-bi (1997)', 1648: u'Niagara, Niagara (1997)', 1649: u'Big One, The (1997)', 1650: u'Butcher Boy, The (1998)', 1651: u'Spanish Prisoner, The (1997)', 1652: u'Temptress Moon (Feng Yue) (1996)', 1653: u'Entertaining Angels: The Dorothy Day Story (1996)', 1654: u'Chairman of the Board (1998)', 1655: u'Favor, The (1994)', 1656: u'Little City (1998)', 1657: u'Target (1995)', 1658: u'Substance of Fire, The (1996)', 1659: u'Getting Away With Murder (1996)', 1660: u'Small Faces (1995)', 1661: u'New Age, The (1994)', 1662: u'Rough Magic (1995)', 1663: u'Nothing Personal (1995)', 1664: u'8 Heads in a Duffel Bag (1997)', 1665: u\"Brother's Kiss, A (1997)\", 1666: u'Ripe (1996)', 1667: u'Next Step, The (1995)', 1668: u'Wedding Bell Blues (1996)', 1669: u'MURDER and murder (1996)', 1670: u'Tainted (1998)', 1671: u'Further Gesture, A (1996)', 1672: u'Kika (1993)', 1673: u'Mirage (1995)', 1674: u'Mamma Roma (1962)', 1675: u'Sunchaser, The (1996)', 1676: u'War at Home, The (1996)', 1677: u'Sweet Nothing (1995)', 1678: u\"Mat' i syn (1997)\", 1679: u'B. Monkey (1998)', 1680: u'Sliding Doors (1998)', 1681: u'You So Crazy (1994)', 1682: u'Scream of Stone (Schrei aus Stein) (1991)'}\n"
+     ]
+    }
+   ],
+   "source": [
+    "movies = sc.textFile(\"../data/ML_spark/MovieLens/u.item\")\n",
+    "titles = movies.map(lambda line: (int(line.split('|')[0]),line.split('|')[1])).collectAsMap()\n",
+    "print titles"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "rank:0 Eat Drink Man Woman (1994):6.15284491245\n",
+      "rank:1 Casino (1995):6.10163520889\n",
+      "rank:2 Sunset Blvd. (1950):5.62902786188\n",
+      "rank:3 Once Upon a Time in the West (1969):5.6082416842\n",
+      "rank:4 Belle de jour (1967):5.54629169828\n",
+      "rank:5 Wrong Trousers, The (1993):5.50376600967\n",
+      "rank:6 Jean de Florette (1986):5.45471934496\n",
+      "rank:7 Searching for Bobby Fischer (1993):5.36556722981\n",
+      "rank:8 Lawrence of Arabia (1962):5.30207731145\n",
+      "rank:9 Nikita (La Femme Nikita) (1990):5.28293214622\n"
+     ]
+    }
+   ],
+   "source": [
+    "for i,rec in enumerate(topKRecs):\n",
+    "    print 'rank:'+str(i)+' '+str(titles[rec.product])+':'+str(rec.rating)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "def cosineSImilarity(x,y):\n",
+    "    return np.dot(x,y)/(np.linalg.norm(x)*np.linalg.norm(y))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.0\n",
+      "3.74165738677\n"
+     ]
+    }
+   ],
+   "source": [
+    "testx = np.array([1.0,2.0,3.0])\n",
+    "print cosineSImilarity(testx,testx)\n",
+    "print np.linalg.norm(testx)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "array('d', [0.49078404903411865, 0.012953451834619045, 0.7479921579360962, 0.4946943521499634, 0.6509256958961487, -0.4265731871128082, -0.13153676688671112, -0.3975328505039215, -0.38279953598976135, -1.2912747859954834, 0.2635449469089508, -0.8708798289299011, 0.6441885828971863, 0.33515551686286926, 0.14537470042705536, 0.9009832143783569, 0.009731626138091087, 0.023789778351783752, 0.27959856390953064, 0.007528654765337706, 0.08425039052963257, 0.43897491693496704, -0.16026359796524048, -0.20233289897441864, 2.104543924331665, 0.10034932941198349, -0.3649766743183136, 0.39258718490600586, 1.0704870223999023, -0.5270863175392151, 0.9657369256019592, -0.5661191344261169, -0.9723479151725769, -0.18243126571178436, 0.4041025638580322, -0.6465684175491333, 0.196022629737854, -0.6070469617843628, -0.08054587990045547, -0.14497430622577667, 0.7804021835327148, 0.03698401153087616, 0.12916600704193115, -0.6674327254295349, 0.9700697064399719, 0.42157983779907227, 0.7554676532745361, -1.2583849430084229, 1.099467158317566, -0.07886099815368652])\n"
+     ]
+    }
+   ],
+   "source": [
+    "itemId = 567\n",
+    "itemFactor = model.productFeatures().lookup(itemId)[0]\n",
+    "# itemFactor = itemFactor[1]\n",
+    "print itemFactor\n",
+    "# model.productFeatures().collect()\n",
+    "sims = model.productFeatures().map(lambda (id,factor):(id,cosineSImilarity(np.array(factor),np.array(itemFactor))))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[(567, 1.0),\n",
+       " (719, 0.71248410792997596),\n",
+       " (413, 0.69059376096633496),\n",
+       " (25, 0.67763829324023017),\n",
+       " (1314, 0.67407970230964287),\n",
+       " (1376, 0.67392156181875307),\n",
+       " (985, 0.67356021728588122),\n",
+       " (302, 0.67100724629582231),\n",
+       " (1416, 0.66989727830701273),\n",
+       " (853, 0.65847813087617835)]"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# sortedSims = sims.sortBy(lambda (x,y) :y).collect()\n",
+    "sims.sortBy(lambda (x,y):y,ascending=False).take(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Rating(user=789, product=1012, rating=4.0)\n"
+     ]
+    }
+   ],
+   "source": [
+    "actualRating = moviesForUser[0][0]\n",
+    "print actualRating"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "4.05457508298\n",
+      "0.00297843968204\n"
+     ]
+    }
+   ],
+   "source": [
+    "predictedRating = model.predict(789,actualRating.product)\n",
+    "import math\n",
+    "print predictedRating\n",
+    "print math.pow(predictedRating-actualRating.rating,2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "(196, 242)\n",
+      "[((195, 1084), 3.9097299400338623), ((58, 1084), 4.127441864829657), ((541, 1084), 4.0361277777635545), ((470, 1084), 3.050509557952725), ((682, 1084), 1.974494399379628)]\n"
+     ]
+    }
+   ],
+   "source": [
+    "userProducts = ratings.map(lambda rating:(rating.user,rating.product))\n",
+    "# model_broadcast = sc.broadcast(model)\n",
+    "print userProducts.take(1)[0]\n",
+    "# predictions = userProducts.map(lambda (x,y):(x,y,model_broadcast.predict(x,y)))\n",
+    "predictions = model.predictAll(userProducts).map(lambda rating:((rating.user,rating.product),rating.rating))\n",
+    "print predictions.take(5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[((621, 577), (3.0, 3.024912394805944)), ((363, 849), (2.0, 1.9396191866428834)), ((109, 365), (4.0, 3.873292944661129)), ((254, 622), (4.0, 3.9909069692632793)), ((720, 286), (5.0, 4.966204197437744))]\n"
+     ]
+    }
+   ],
+   "source": [
+    "ratingsAndPredictions = ratings.map(lambda rating:((rating.user,rating.product),rating.rating)).join(predictions)\n",
+    "print ratingsAndPredictions.take(5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {
+    "collapsed": false,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.110573849112\n",
+      "0.332526463777\n"
+     ]
+    }
+   ],
+   "source": [
+    "MSE = ratingsAndPredictions.map(lambda ((x,y),(m,n)):math.pow(m-n,2)).reduce(lambda x,y:x+y)/ratingsAndPredictions.count()\n",
+    "print MSE\n",
+    "print math.sqrt(MSE)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 96,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# APK\n",
+    "def avgPrecisionK(actual, predicted,k=10):\n",
+    "    if len(predicted)>k:\n",
+    "        predicted = predicted[:k]\n",
+    "\n",
+    "    score = 0.0\n",
+    "    num_hits = 0.0\n",
+    "    for i,p in enumerate(predicted):\n",
+    "        if p in actual and p not in predicted[:i]:\n",
+    "            num_hits += 1.0\n",
+    "            score += num_hits / (i+1.0)\n",
+    "\n",
+    "    if not actual:\n",
+    "        return 1.0\n",
+    "\n",
+    "    return score / min(len(actual), k)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 63,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[1012, 127, 475, 93, 1161, 286, 293, 9, 50, 294, 181, 1, 1008, 508, 284, 1017, 137, 111, 742, 248, 249, 1007, 591, 150, 276, 151, 129, 100, 741, 288, 762, 628, 124]\n",
+      "[45, 693, 488, 646, 30, 169, 165, 87, 511, 198]\n"
+     ]
+    }
+   ],
+   "source": [
+    "actualMovies = [rating.product for rating in moviesForUser[0]]\n",
+    "predictMovies = [rating.product for rating in topKRecs]\n",
+    "print actualMovies\n",
+    "print predictMovies"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 64,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "apk10 = avgPrecisionK(actualMovies,predictMovies,10)\n",
+    "print apk10"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[[-0.56040549  0.12426949  1.39385641 ..., -2.10716724  0.93263996\n",
+      "  -0.06961832]\n",
+      " [-0.6338225  -0.45199269  0.29880574 ..., -1.60107303  0.55651504\n",
+      "  -0.30998191]\n",
+      " [ 0.27567902 -0.55576426  1.56970084 ..., -1.82570267  1.02763498\n",
+      "   0.37729299]\n",
+      " ..., \n",
+      " [ 0.05657623 -0.05834675  0.12872325 ..., -0.20585941  0.08904345\n",
+      "   0.14201939]\n",
+      " [ 0.02720444 -0.03196245  0.1858432  ..., -0.18072413 -0.32529363\n",
+      "   0.22977404]\n",
+      " [ 0.14529222 -0.20424826  0.36027607 ..., -0.46585017  0.47996596\n",
+      "  -0.0286847 ]]\n",
+      "(1682, 50)\n"
+     ]
+    }
+   ],
+   "source": [
+    "itemFactors = model.productFeatures().map(lambda (id,factor):factor).collect()\n",
+    "itemMatrix = np.array(itemFactors)\n",
+    "print itemMatrix\n",
+    "print itemMatrix.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 66,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# 便于后面进行map计算的时候使所有map都有效，这里在实际当中的意思是把数据广播到任何一个节点\n",
+    "imBroadcast = sc.broadcast(itemMatrix)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 67,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "943"
+      ]
+     },
+     "execution_count": 67,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "userVector = model.userFeatures().map(lambda (userId,array):(userId,np.array(array)))\n",
+    "# print userVector[0]\n",
+    "userVector = userVector.map(lambda (userId,x): (userId,imBroadcast.value.dot((np.array(x).transpose()))))\n",
+    "userVectorId = userVector.map(lambda (userId,x) : (userId,[(xx,i) for i,xx in enumerate(x.tolist())]))\n",
+    "sortUserVectorId = userVectorId.map(lambda (userId,x):(userId,sorted(x,key=lambda x:x[0],reverse=True)))\n",
+    "sortUserVectorRecId = sortUserVectorId.map(lambda (userId,x): (userId,[xx[1] for xx in x]))\n",
+    "# print sortUserVectorRecId.take(2)\n",
+    "sortUserVectorRecId.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 98,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.115484271925\n"
+     ]
+    }
+   ],
+   "source": [
+    "#val userMovies = ratings.map{ case Rating(user, product, rating) =>(user, product) }.groupBy(_._1)\n",
+    "\n",
+    "userMovies = ratings.map(lambda rating: (rating.user,rating.product)).groupBy(lambda (x,y):x)\n",
+    "userMovies = userMovies.map(lambda (userId,x):(userId, [xx[1] for xx in x] ))\n",
+    "# userMovies.take(1)\n",
+    "# allAPK=sortUserVectorRecId.join(userMovies).map(lambda (userId,(predicted, actual)):(userId,avgPrecisionK(actual,predicted,10)))\n",
+    "# print allAPK.map(lambda (x,y):y).reduce(lambda x,y:x+y)/sortUserVectorRecId.count()\n",
+    "allAPK=sortUserVectorRecId.join(userMovies).map(lambda (userId,(predicted, actual)):avgPrecisionK(actual,predicted,2000))\n",
+    "# print allAPK.take(10)\n",
+    "print allAPK.reduce(lambda x,y:x+y)/allAPK.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 69,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[(3.0, 3.024912394805944)]\n",
+      "Mean Squared Error = 0.110574\n",
+      "Root Mean Squared Error 0.332526\n"
+     ]
+    }
+   ],
+   "source": [
+    "# 用MLlib内置的evaluation函数\n",
+    "from pyspark.mllib.evaluation import RegressionMetrics\n",
+    "from pyspark.mllib.evaluation import RankingMetrics\n",
+    "predictedAndTrue = ratingsAndPredictions.map(lambda ((userId,product),(predicted, actual)):(predicted,actual))\n",
+    "print predictedAndTrue.take(1)\n",
+    "regressionMetrics = RegressionMetrics(predictedAndTrue)\n",
+    "print \"Mean Squared Error = %f\"%regressionMetrics.meanSquaredError\n",
+    "print \"Root Mean Squared Error %f\"% regressionMetrics.rootMeanSquaredError"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 99,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean Average Precision = 0.115484\n",
+      "Mean Average Precision(at K=10) = 0.131707\n"
+     ]
+    }
+   ],
+   "source": [
+    "#MAP\n",
+    "# The implementation of the average precision at the K function in RankingMetrics is slightly different from ours, \n",
+    "# so we will get different results. However, the computation of the overall mean average precision (MAP, which does \n",
+    "# not use a threshold at K) is the same as our function if we select K to be very high (say, at least as high as the number of items in our item set)\n",
+    "sortedLabels = sortUserVectorRecId.join(userMovies).map(lambda (userId,(predicted, actual)):(predicted,actual))\n",
+    "# print sortedLabels.take(1)\n",
+    "rankMetrics = RankingMetrics(sortedLabels)\n",
+    "print \"Mean Average Precision = %f\" % rankMetrics.meanAveragePrecision\n",
+    "print \"Mean Average Precision(at K=10) = %f\" % rankMetrics.precisionAt(5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
