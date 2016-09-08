@@ -11,3 +11,5 @@ the python code of the book:Machine Learning with Spark
 ##Spark上利用分类器做Kaggle比赛
 
 some notes with the book \<\<Machine Learning with Spark\>\> are in [my website](http://hacker.duanshishi.com)
+
+#初次学习，请多多关照
